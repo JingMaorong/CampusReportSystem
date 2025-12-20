@@ -263,7 +263,131 @@ public:
 
 
     //Part D: Undo Feature(Stack)
-    //Stack 写这儿
+
+    //Action type for actions that are undoable
+    enum ActionType {
+        ADD,
+        DELETE,
+        UPDATE
+    };
+
+    //Action structure with action types and backup ticket
+    struct Action {
+        ActionType type;
+        Ticket ticketBackup;
+    };
+
+    // Linked List Implementation of STACK
+    class StackNode {
+    public:
+        Action data;
+        StackNode* next;
+    };
+
+    class ActionStack {
+    private:
+        StackNode* top;
+
+    public:
+        ActionStack() {
+            top = nullptr;
+        }
+
+        bool isEmpty() {
+            return top == nullptr;
+        }
+
+        void push(Action a) {
+            StackNode* newNode = new StackNode;
+            if (newNode == nullptr)
+                cout << "Cannot allocate memory.\n";
+            else {
+                newNode->data = a;
+                newNode->next = top;
+                top = newNode;
+            }
+        }
+
+        Action pop() {
+
+            StackNode* temp = top;
+            Action a = temp->data;
+            top = temp->next;
+            delete temp;
+            return a;
+        }
+    };
+
+    ActionStack undoStack; //Undo Stack that stack action objects
+
+    //Add action被UNDO的时候, 就是delete被添加的ticket
+    //所以 AddTicketUndo function把这个action type存进stack
+    //When undo function run, action type = ADD, lead to delete ticket
+    void AddTicketUndo(Ticket t) //push add action into undo stack
+    {
+        InsertSorted(t);
+
+        Action add_act; //create an action object for add action
+        add_act.type = ADD;
+        add_act.ticketBackup = t;
+
+        undoStack.push(add_act);
+    }
+
+    //Delete action被UNDO的时候, 就是把删掉的ticket加回去
+    //所以 DeleteTicketUndo function把这个action type存进stack
+    //When undo function run, action type = DELETE, lead to add ticket WITH backup ticket data
+
+    bool BackupTicket(int id, Ticket& backup) //备份ticket data, when undo, copy to add back
+    {
+        Node* temp = head;
+        while (temp != nullptr) {
+            if (temp->data.TicketID == id) {
+                backup = temp->data;
+                return true;
+            }
+            temp = temp->next;
+        }
+        return false;
+    }
+
+    void DeleteTicketUndo(int id) //push delete action into undo stack
+    {
+        Ticket backup;
+        //backup deleted ticket
+        if (!BackupTicket(id, backup)) {
+            cout << "Ticket not found. Backup unsuccessful.\n";
+            return;
+        }
+
+        Delete(id);
+        Action d_act;       //create an action object for delete action
+        d_act.type = DELETE;
+        d_act.ticketBackup = backup; //copy backup data 
+        undoStack.push(d_act);
+    }
+
+    void Undo() {
+
+        if (undoStack.isEmpty()) {
+            cout << "No action to undo.\n";
+            return;
+        }
+
+        Action last = undoStack.pop();
+
+        if (last.type == ADD)
+        {
+            Delete(last.ticketBackup.TicketID); // Undo Add Ticket = Delete added Ticket
+            cout << "Successfully undo Add action.\n";
+        }
+        else if (last.type == DELETE)
+        {
+            InsertSorted(last.ticketBackup);    // Undo Delete Ticket = Add back Ticket
+            cout << "Successfully undo Delete action.\n";
+        }
+
+    }
 
 
 
@@ -347,8 +471,8 @@ int main()//部分功能被我打了注释，如果要用取消注释,且功能�
                     cout << "Enter the Prioriry:";
                     cin >> t.Priority;
 
-
-                    system.InsertSorted(t);
+                    //从InsertSorted()换成这个因为要记录add action in undo stack
+                    system.AddTicketUndo(t);
                     system.Display();
                 }
 
@@ -372,7 +496,8 @@ int main()//部分功能被我打了注释，如果要用取消注释,且功能�
                     cout << "Enter Ticket ID to delete: ";
                     cin >> id;
 
-                    system.Delete(id);
+                    //从Delete()换成这个因为要记录delete action in undo stack & backup ticket data
+                    system.DeleteTicketUndo(id);
                     system.Display();
                 }
 
@@ -503,10 +628,7 @@ int main()//部分功能被我打了注释，如果要用取消注释,且功能�
                 cin >> sub;
 
                 if (sub == 1) {
-                    // TODO: Stack undo
-                    //要加STack功能
-                    cout << "[Undo not implemented yet]\n";
-
+                    system.Undo(); //Undo last action in the stack
 
                 }
 
