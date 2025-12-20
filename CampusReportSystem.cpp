@@ -247,8 +247,8 @@ public:
     //Part C: 1. Sort tickets by Priority (descending)  数字越大越重要   2. Sort tickets by Reporter Name (ascending)
     void SortByPriority() //Desc     
     {
-        Node* temp = head;
-        //foreach
+       
+        
 
 
     }
