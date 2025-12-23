@@ -1,7 +1,0 @@
-<Solution>
-  <Configurations>
-    <Platform Name="x64" />
-    <Platform Name="x86" />
-  </Configurations>
-  <Project Path="CampusReportSystem.vcxproj" Id="f148e009-9d32-4bfb-8682-477c495e4140" />
-</Solution>
